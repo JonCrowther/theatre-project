@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -11,26 +13,20 @@ class ResourceListPage extends StatefulWidget {
 class _ResourceListPageState extends State<ResourceListPage> {
   final CollectionReference _resourceDB = FirebaseFirestore.instance.collection('resources');
 
-  late final resources = _resourceDB.get();
-  late final documents = resources.then((value) {
-    var d = value.docs;
-    // Start with items sorted by resource_name
-    d.sort((a,b) => a.get("resource_name").toString().compareTo(b.get("resource_name").toString()));
-    return d;
-  });
-    
+  late Stream<QuerySnapshot<Object?>> _resources = Stream.fromFuture(_resourceDB.get());
+
   bool sort = false;
   int sortColumnIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: FutureBuilder(
-        future: documents,
+      child: StreamBuilder(
+        stream: _resources,
         builder: (context, snapshot){
-          if (snapshot.hasData) {
-            var data = snapshot.data;
-            var length = data!.length;
+          if (snapshot.hasData) {            
+            var data = snapshot.data!.docs;
+            var length = data.length;
             onSortColumn(int columnIndex, bool ascending) {
               String column;
               switch(columnIndex) {
@@ -63,6 +59,9 @@ class _ResourceListPageState extends State<ResourceListPage> {
                       sortColumnIndex = columnIndex;
                     });
                     onSortColumn(columnIndex, ascending);
+                    for (final d in data) {
+                      print(d.data());
+                    }
                   },
                 ),
                 DataColumn(
@@ -80,6 +79,7 @@ class _ResourceListPageState extends State<ResourceListPage> {
                   },
                   ),
                 const DataColumn(label: Text("Available")),
+                const DataColumn(label: Text("")),
               ], 
               rows: List<DataRow>.generate(
                 length,
@@ -90,6 +90,23 @@ class _ResourceListPageState extends State<ResourceListPage> {
                       DataCell(Text(document.get("resource_name"))),
                       DataCell(Text(document.get("location"))),
                       DataCell(Text(document.get("available").toString())),
+                      DataCell(Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {},
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () {
+                              _resourceDB.doc(document.id).delete();
+                              setState(() {
+                                _resources = Stream.fromFuture(_resourceDB.get());
+                              });
+                            },
+                          ),
+                        ],
+                      )),
                     ],
                   );
                 }
