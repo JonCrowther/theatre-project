@@ -235,21 +235,7 @@ class ResourceListPage extends StatelessWidget {
                 }
               )
             );
-            /*
-            return ListView.builder(
-              itemCount: (){
-                return snapshot.data!.docs.length;
-              }(),
-              itemBuilder: (context, index) {
-                var data = snapshot.data!.docs;
-                var text = data[index].data().toString();
-                return ListTile(
-                  title: Text(text),
-                );
-              },
-            );*/
           }
-
           if (snapshot.hasError) return const Text("error");
           return const CircularProgressIndicator();
         },
