@@ -2,6 +2,8 @@ import 'resource.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:theatre_application/firebase_options.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,24 +37,78 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+   var selectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(
-              width: 300,
-              child: ResourceForm(),
-            )
-          ],
-        ),
-      ),
+    Widget page;
+    switch (selectedIndex) {
+      case 0:
+        page = const SubmitResourcePage();
+      case 1:
+        page = ResourceListPage();
+      default:
+        throw UnimplementedError('no widget for $selectedIndex');
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            title: Text(widget.title),
+          ),
+          body: Row(
+            children: [
+              SafeArea(
+                child: NavigationRail(
+                  extended: constraints.maxWidth >= 600,
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.add_circle_outline), 
+                      label: Text("Add Resource"),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.search), 
+                      label: Text("Find Resource")
+                    ),
+                  ], 
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (value) {
+                    setState(() {
+                      selectedIndex = value;
+                    });
+                  },
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: page
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    );
+  }
+}
+
+class SubmitResourcePage extends StatelessWidget {
+  const SubmitResourcePage({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          SizedBox(
+            width: 300,
+            child: ResourceForm(),
+          )
+        ],
+      )
     );
   }
 }
@@ -142,6 +198,62 @@ class _ResourceForm extends State<ResourceForm> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class ResourceListPage extends StatelessWidget {
+  ResourceListPage({super.key});
+  
+  final CollectionReference _resourceDB = FirebaseFirestore.instance.collection('resources');
+  late final resources = _resourceDB.get();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: FutureBuilder(
+        future: resources,
+        builder: (context, snapshot){
+          if (snapshot.hasData) {
+            return DataTable(
+              columns: const <DataColumn>[
+                DataColumn(label: Text("Name")),
+                DataColumn(label: Text("Location")),
+                DataColumn(label: Text("Available")),
+              ], 
+              rows: List<DataRow>.generate(
+                (){return snapshot.data!.docs.length;}(),
+                (int index) {
+                  var document = snapshot.data!.docs[index];
+                  return DataRow(
+                    cells: <DataCell>[
+                      DataCell(Text(document.get("resource_name"))),
+                      DataCell(Text(document.get("location"))),
+                      DataCell(Text(document.get("available").toString())),
+                    ]
+                  );
+                }
+              )
+            );
+            /*
+            return ListView.builder(
+              itemCount: (){
+                return snapshot.data!.docs.length;
+              }(),
+              itemBuilder: (context, index) {
+                var data = snapshot.data!.docs;
+                var text = data[index].data().toString();
+                return ListTile(
+                  title: Text(text),
+                );
+              },
+            );*/
+          }
+
+          if (snapshot.hasError) return const Text("error");
+          return const CircularProgressIndicator();
+        },
+      )
     );
   }
 }
