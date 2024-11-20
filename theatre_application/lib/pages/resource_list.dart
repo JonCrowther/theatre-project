@@ -58,10 +58,7 @@ class _ResourceListPageState extends State<ResourceListPage> {
                       }
                       sortColumnIndex = columnIndex;
                     });
-                    onSortColumn(columnIndex, ascending);
-                    for (final d in data) {
-                      print(d.data());
-                    }
+                    //onSortColumn(columnIndex, ascending);
                   },
                 ),
                 DataColumn(
@@ -75,7 +72,7 @@ class _ResourceListPageState extends State<ResourceListPage> {
                       }
                       sortColumnIndex = columnIndex;
                     });
-                    onSortColumn(columnIndex, ascending);
+                    //onSortColumn(columnIndex, ascending);
                   },
                   ),
                 const DataColumn(label: Text("Available")),
@@ -84,6 +81,7 @@ class _ResourceListPageState extends State<ResourceListPage> {
               rows: List<DataRow>.generate(
                 length,
                 (int index) {
+                  onSortColumn(sortColumnIndex, sort);
                   var document = data[index];
                   return DataRow(
                     cells: <DataCell>[
@@ -99,10 +97,28 @@ class _ResourceListPageState extends State<ResourceListPage> {
                           IconButton(
                             icon: const Icon(Icons.delete),
                             onPressed: () {
-                              _resourceDB.doc(document.id).delete();
-                              setState(() {
-                                _resources = Stream.fromFuture(_resourceDB.get());
-                              });
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  content: Text("Are you sure you want to delete ${document.get("resource_name")}?"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        _resourceDB.doc(document.id).delete();
+                                        setState(() {
+                                          _resources = Stream.fromFuture(_resourceDB.get());
+                                        });
+                                        Navigator.pop(context, 'OK');
+                                      },
+                                      child: const Text("Ok"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, "Cancel"),
+                                      child: const Text("Cancel"),
+                                    )
+                                  ],
+                                )
+                              );
                             },
                           ),
                         ],
