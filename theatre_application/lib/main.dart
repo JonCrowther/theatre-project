@@ -43,9 +43,9 @@ class _MyHomePageState extends State<MyHomePage> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = const SubmitResourcePage();
-      case 1:
         page = const ResourceListPage();
+      case 1:
+        page = const Placeholder();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -58,17 +58,18 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           body: Row(
             children: [
+              /*
               SafeArea(
                 child: NavigationRail(
                   extended: constraints.maxWidth >= 600,
                   destinations: const [
                     NavigationRailDestination(
-                      icon: Icon(Icons.add_circle_outline), 
-                      label: Text("Add Resource"),
+                      icon: Icon(Icons.search), 
+                      label: Text("Find Resource"),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.search), 
-                      label: Text("Find Resource")
+                      icon: Icon(Icons.add_circle_outline), 
+                      label: Text("Add Resource"),
                     ),
                   ], 
                   selectedIndex: selectedIndex,
@@ -78,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     });
                   },
                 ),
-              ),
+              ),*/
               Expanded(
                 child: Container(
                   color: Theme.of(context).colorScheme.primaryContainer,

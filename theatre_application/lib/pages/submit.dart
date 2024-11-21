@@ -1,5 +1,6 @@
 import '../resource.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 class SubmitResourcePage extends StatelessWidget {
@@ -33,7 +34,7 @@ class _ResourceForm extends State<ResourceForm> {
   final locationController = TextEditingController();
   final availableController = TextEditingController();
 
-  final _resource = Resource();
+  final _resource = Resource("","","",false);
 
   @override
   void dispose() {

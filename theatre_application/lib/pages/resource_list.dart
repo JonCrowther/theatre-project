@@ -1,7 +1,8 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../globals.dart' as globals;
+import '../resource.dart';
+import '../widgets/form.dart';
 
 class ResourceListPage extends StatefulWidget {
   const ResourceListPage({super.key});
@@ -11,20 +12,19 @@ class ResourceListPage extends StatefulWidget {
 }
 
 class _ResourceListPageState extends State<ResourceListPage> {
-  final CollectionReference _resourceDB = FirebaseFirestore.instance.collection('resources');
-
-  late Stream<QuerySnapshot<Object?>> _resources = Stream.fromFuture(_resourceDB.get());
-
   bool sort = false;
   int sortColumnIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: StreamBuilder(
-        stream: _resources,
-        builder: (context, snapshot){
-          if (snapshot.hasData) {            
+    return Scaffold(
+      body: Center(
+        child: StreamBuilder(
+          stream: FirebaseFirestore.instance.collection(globals.resourceDBName).snapshots(),
+          builder: (context, snapshot){
+            if (snapshot.hasError) return const Text("error");
+            if (!snapshot.hasData) return const CircularProgressIndicator();
+            
             var data = snapshot.data!.docs;
             var length = data.length;
             onSortColumn(int columnIndex, bool ascending) {
@@ -58,7 +58,6 @@ class _ResourceListPageState extends State<ResourceListPage> {
                       }
                       sortColumnIndex = columnIndex;
                     });
-                    //onSortColumn(columnIndex, ascending);
                   },
                 ),
                 DataColumn(
@@ -72,7 +71,6 @@ class _ResourceListPageState extends State<ResourceListPage> {
                       }
                       sortColumnIndex = columnIndex;
                     });
-                    //onSortColumn(columnIndex, ascending);
                   },
                   ),
                 const DataColumn(label: Text("Available")),
@@ -90,37 +88,8 @@ class _ResourceListPageState extends State<ResourceListPage> {
                       DataCell(Text(document.get("available").toString())),
                       DataCell(Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () {},
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) => AlertDialog(
-                                  content: Text("Are you sure you want to delete ${document.get("resource_name")}?"),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        _resourceDB.doc(document.id).delete();
-                                        setState(() {
-                                          _resources = Stream.fromFuture(_resourceDB.get());
-                                        });
-                                        Navigator.pop(context, 'OK');
-                                      },
-                                      child: const Text("Ok"),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, "Cancel"),
-                                      child: const Text("Cancel"),
-                                    )
-                                  ],
-                                )
-                              );
-                            },
-                          ),
+                          EditIcon(document: document),
+                          DeleteIcon(document: document),
                         ],
                       )),
                     ],
@@ -129,10 +98,81 @@ class _ResourceListPageState extends State<ResourceListPage> {
               )
             );
           }
-          if (snapshot.hasError) return const Text("error");
-          return const CircularProgressIndicator();
+        )
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              content: FormWidget(resource: Resource.empty()),
+            ),
+          );
         },
-      )
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class EditIcon extends StatelessWidget {
+  const EditIcon({
+    super.key,
+    required this.document,
+  });
+
+  final QueryDocumentSnapshot<Map<String, dynamic>> document;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.edit),
+      onPressed: () {
+        Resource r = Resource.fromDocument(document);
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            content: FormWidget(resource: r),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class DeleteIcon extends StatelessWidget {
+  const DeleteIcon({
+    super.key,
+    required this.document,
+  });
+
+  final QueryDocumentSnapshot<Map<String, dynamic>> document;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.delete),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            content: Text("Are you sure you want to delete ${document.get("resource_name")}?"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  FirebaseFirestore.instance.collection(globals.resourceDBName).doc(document.id).delete();
+                  Navigator.pop(context, 'OK');
+                },
+                child: const Text("Ok"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, "Cancel"),
+                child: const Text("Cancel"),
+              )
+            ],
+          )
+        );
+      },
     );
   }
 }
