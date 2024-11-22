@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../resource.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../globals.dart' as globals;
 
 class ResourceDetails extends StatefulWidget{
   const ResourceDetails({super.key, required this.resource});
@@ -13,10 +15,11 @@ class ResourceDetails extends StatefulWidget{
 class _ResourceDetailsState extends State<ResourceDetails> {
   late Resource myResource;
   late Text appBarTitleText;
-  TextEditingController? nameController;
-  TextEditingController? locationController;
+  late TextEditingController nameController;
+  late TextEditingController locationController;
 
   bool isFormEditable = false;
+  bool inEditingMode = false;
   
   @override
   void initState() {
@@ -29,8 +32,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   
   @override
   void dispose() {
-    nameController!.dispose();
-    locationController!.dispose();
+    nameController.dispose();
+    locationController.dispose();
     super.dispose();
   }
 
@@ -41,7 +44,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
-        title: appBarTitleText,
+        title: Text(myResource.name),
       ),
       body: Center(
         child: Form(
@@ -89,41 +92,100 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Ink(
-              decoration: ShapeDecoration(
-                shape: CircleBorder(),
-                color: Theme.of(context).colorScheme.secondary,
+            if(inEditingMode) ...[
+              Ink(
+                decoration: ShapeDecoration(
+                  shape: CircleBorder(),
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.save),
+                  color: Colors.white,
+                  tooltip: "Save",
+                  onPressed: (){
+                    myResource.name = nameController.text;
+                    myResource.location = locationController.text;
+                    myResource.addResource();
+                    setState(() {
+                      isFormEditable = false;
+                      inEditingMode = false;
+                    });
+                  },
+                ),
+              ),  
+              Padding(padding: EdgeInsets.symmetric(horizontal: 15)),
+              Ink(
+                decoration: ShapeDecoration(
+                  shape: CircleBorder(),
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.close),
+                  color: Colors.white,
+                  tooltip: "Cancel",
+                  onPressed: (){
+                    setState(() {
+                      isFormEditable = false;
+                      inEditingMode = false;
+                      nameController.text = myResource.name;
+                      locationController.text = myResource.location;
+                    });
+                  },
+                ),
+              ),              
+            ] else ...[
+              Ink(
+                decoration: ShapeDecoration(
+                  shape: CircleBorder(),
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.edit),
+                  color: Colors.white,
+                  tooltip: "Edit",
+                  onPressed: (){
+                    setState(() {
+                      isFormEditable = true;
+                      inEditingMode = true;
+                    });
+                  },
+                ),
               ),
-              child: IconButton(
-                icon: Icon(Icons.edit),
-                color: Colors.white,
-                tooltip: "Edit",
-                onPressed: (){
-                  setState(() {
-                    isFormEditable = true;
-                  });
-                },
-              ),
-            ),
-            Padding(padding: EdgeInsets.symmetric(horizontal: 10)),
-            Ink(
-              decoration: ShapeDecoration(
-                shape: CircleBorder(),
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-              child: IconButton(
-                icon: Icon(Icons.close),
-                color: Colors.white,
-                tooltip: "Cancel",
-                onPressed: (){
-                  setState(() {
-                    isFormEditable = false;
-                    nameController!.text = myResource.name;
-                    locationController!.text = myResource.location;
-                  });
-                },
-              ),
-            )
+              Padding(padding: EdgeInsets.symmetric(horizontal: 15)),
+              Ink(
+                decoration: ShapeDecoration(
+                  shape: CircleBorder(),
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.delete),
+                  color: Colors.white,
+                  tooltip: "Delete",
+                  onPressed: (){
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        content: Text("Are you sure you want to delete ${myResource.name}?"),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              FirebaseFirestore.instance.collection(globals.resourceDBName).doc(myResource.id).delete();
+                              Navigator.pop(context, 'OK');
+                              Navigator.pop(context, 'Deleted');
+                            },
+                            child: const Text("Ok"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, "Cancel"),
+                            child: const Text("Cancel"),
+                          )
+                        ],
+                      )
+                    );
+                  },
+                ),
+              )
+            ]
           ],
         )
       ) 

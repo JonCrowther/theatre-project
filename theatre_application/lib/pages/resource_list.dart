@@ -101,12 +101,7 @@ class _ResourceListPageState extends State<ResourceListPage> {
                           DataCell(Text(document.get("resource_name"))),
                           DataCell(Text(document.get("location"))),
                           DataCell(Text(document.get("available").toString())),
-                          DataCell(Row(
-                            children: [
-                              EditIcon(document: document),
-                              DeleteIcon(document: document),
-                            ],
-                          )),
+                          DataCell(DeleteIcon(document: document)),
                         ],
                       );
                     }
