@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:theatre_application/firebase_options.dart';
-import 'pages/submit.dart';
 import 'pages/resource_list.dart';
 
 void main() async {
