@@ -4,6 +4,7 @@ import '../globals.dart' as globals;
 import '../resource.dart';
 import '../widgets/form.dart';
 import '../widgets/icons.dart';
+import './resource_details.dart';
 
 class ResourceListPage extends StatefulWidget {
   const ResourceListPage({super.key});
@@ -45,59 +46,72 @@ class _ResourceListPageState extends State<ResourceListPage> {
               }
             }
             return SingleChildScrollView(
-              child: DataTable(
-                sortAscending: sort,
-                sortColumnIndex: sortColumnIndex,
-                columns: <DataColumn>[
-                  DataColumn(
-                    label: const Text("Name"),
-                    onSort: (columnIndex, ascending) {
-                      setState(() {
-                        if (sortColumnIndex != columnIndex) {
-                          sort = true;
-                        } else {
-                          sort = !sort;
-                        }
-                        sortColumnIndex = columnIndex;
-                      });
-                    },
-                  ),
-                  DataColumn(
-                    label: const Text("Location"),
-                    onSort: (columnIndex, ascending) {
-                      setState(() {
-                        if (sortColumnIndex != columnIndex) {
-                          sort = true;
-                        } else {
-                          sort = !sort;
-                        }
-                        sortColumnIndex = columnIndex;
-                      });
-                    },
+              scrollDirection: Axis.horizontal,
+              child: SingleChildScrollView(
+                child: DataTable(
+                  showCheckboxColumn: false,
+                  sortAscending: sort,
+                  sortColumnIndex: sortColumnIndex,
+                  columns: <DataColumn>[
+                    DataColumn(
+                      label: const Text("Name"),
+                      onSort: (columnIndex, ascending) {
+                        setState(() {
+                          if (sortColumnIndex != columnIndex) {
+                            sort = true;
+                          } else {
+                            sort = !sort;
+                          }
+                          sortColumnIndex = columnIndex;
+                        });
+                      },
                     ),
-                  const DataColumn(label: Text("Available")),
-                  const DataColumn(label: Text("")),
-                ], 
-                rows: List<DataRow>.generate(
-                  length,
-                  (int index) {
-                    onSortColumn(sortColumnIndex, sort);
-                    var document = data[index];
-                    return DataRow(
-                      cells: <DataCell>[
-                        DataCell(Text(document.get("resource_name"))),
-                        DataCell(Text(document.get("location"))),
-                        DataCell(Text(document.get("available").toString())),
-                        DataCell(Row(
-                          children: [
-                            EditIcon(document: document),
-                            DeleteIcon(document: document),
-                          ],
-                        )),
-                      ],
-                    );
-                  }
-                )
+                    DataColumn(
+                      label: const Text("Location"),
+                      onSort: (columnIndex, ascending) {
+                        setState(() {
+                          if (sortColumnIndex != columnIndex) {
+                            sort = true;
+                          } else {
+                            sort = !sort;
+                          }
+                          sortColumnIndex = columnIndex;
+                        });
+                      },
+                      ),
+                    const DataColumn(label: Text("Available")),
+                    const DataColumn(label: Text("")),
+                  ], 
+                  rows: List<DataRow>.generate(
+                    length,
+                    (int index) {
+                      onSortColumn(sortColumnIndex, sort);
+                      var document = data[index];
+                      return DataRow(
+                        onSelectChanged: (bool? selected) {
+                          if (selected == null) return;
+                          if (selected) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ResourceDetails(resource: Resource.fromDocument(document))),
+                            );
+                          }
+                        },
+                        cells: <DataCell>[
+                          DataCell(Text(document.get("resource_name"))),
+                          DataCell(Text(document.get("location"))),
+                          DataCell(Text(document.get("available").toString())),
+                          DataCell(Row(
+                            children: [
+                              EditIcon(document: document),
+                              DeleteIcon(document: document),
+                            ],
+                          )),
+                        ],
+                      );
+                    }
+                  )
+                ),
               ),
             );
           }

@@ -1,3 +1,4 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:theatre_application/firebase_options.dart';
@@ -6,6 +7,11 @@ import 'pages/resource_list.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await FirebaseAppCheck.instance.activate(
+    webProvider: ReCaptchaV3Provider("6LdZJYcqAAAAAMbXi0tqgbC64Z3UqEm84xkTM3r9")
+  );
+
   runApp(const MyApp());
 }
 
@@ -52,33 +58,11 @@ class _MyHomePageState extends State<MyHomePage> {
       builder: (context, constraints) {
         return Scaffold(
           appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             title: Text(widget.title),
           ),
           body: Row(
             children: [
-              /*
-              SafeArea(
-                child: NavigationRail(
-                  extended: constraints.maxWidth >= 600,
-                  destinations: const [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.search), 
-                      label: Text("Find Resource"),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.add_circle_outline), 
-                      label: Text("Add Resource"),
-                    ),
-                  ], 
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: (value) {
-                    setState(() {
-                      selectedIndex = value;
-                    });
-                  },
-                ),
-              ),*/
               Expanded(
                 child: Container(
                   color: Theme.of(context).colorScheme.primaryContainer,
